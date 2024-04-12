@@ -2,7 +2,7 @@ use std::io::{Read, Write};
 use std::net::{Ipv4Addr, Shutdown, SocketAddrV4, TcpListener, TcpStream};
 use std::str::FromStr;
 
-use color_eyre::eyre::{Error, Result};
+use color_eyre::eyre::{eyre, Result};
 use color_eyre::Report;
 
 fn main() -> Result<()> {
@@ -111,9 +111,7 @@ fn handle_server_list_ping(stream: &mut TcpStream) -> Result<()> {
     let len = read_varint(stream);
     if len == 254 {
         stream.shutdown(Shutdown::Both)?;
-        return Err(Error::msg(
-            "Client sent Legacy Ping. Operation not supported",
-        ));
+        return Err(eyre!("Client sent Legacy Ping. Operation not supported",));
     }
 
     let _packet_id = read_varint(stream);
@@ -126,7 +124,7 @@ fn handle_server_list_ping(stream: &mut TcpStream) -> Result<()> {
         stream
             .shutdown(Shutdown::Both)
             .expect("Error shutting down stream");
-        return Err(Error::msg(
+        return Err(eyre!(
             "Client tried joining the Server. Operation not supported",
         ));
     }
@@ -183,7 +181,7 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Incoming connection from {}", stream.peer_addr().unwrap());
     std::thread::spawn(move || {
         if let Err(report) = handle_server_list_ping(&mut stream) {
-            println!("{}", report);
+            eprintln!("{}", report)
         }
     });
 }
