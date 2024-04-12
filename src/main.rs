@@ -12,19 +12,51 @@ use mc_honeypot::types::{
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value = "25565")]
+    #[arg(
+        short,
+        long,
+        help = "The port the honeypot will listen on",
+        default_value = "25565"
+    )]
     port: u16,
-    #[arg(short, long, default_value = "1.20.4")]
+    #[arg(
+        short,
+        long,
+        help = "The version string displayed by the Client",
+        default_value = "1.20.4"
+    )]
     version_string: String,
-    #[arg(long, default_value = "765")]
+    #[arg(
+        long,
+        help = "This is used by clients to determine if it is compatible with our server",
+        default_value = "765"
+    )]
     protocol_version: i32,
-    #[arg(short, long, default_value = "100")]
+    #[arg(
+        short,
+        long,
+        help = "The displayed maximum player count",
+        default_value = "100"
+    )]
     max_players: i32,
-    #[arg(short, long, default_value = "0")]
+    #[arg(
+        short,
+        long,
+        help = "The displayed online player count",
+        default_value = "0"
+    )]
     online_players: i32,
-    #[arg(long, default_value = "§aHello, World")]
+    #[arg(
+        long,
+        help = "The displayed \"Message of the Day\"",
+        default_value = "§aHello, World"
+    )]
     motd: String,
-    #[arg(short, long)]
+    #[arg(
+        short,
+        long,
+        help = "Path to png image which is displayed as the server icon. Needs to be 64x64 pixels in size"
+    )]
     icon_file: Option<String>,
 }
 
