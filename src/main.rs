@@ -1,8 +1,17 @@
 use std::io::{Read, Write};
-use std::net::{Shutdown, TcpListener, TcpStream};
+use std::net::{Ipv4Addr, Shutdown, SocketAddrV4, TcpListener, TcpStream};
+use std::str::FromStr;
 
-fn main() -> std::io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:25565")?;
+use color_eyre::eyre::{Error, Result};
+use color_eyre::Report;
+
+fn main() -> Result<()> {
+    color_eyre::install()?;
+
+    let listener = TcpListener::bind(SocketAddrV4::new(
+        Ipv4Addr::from_str("127.0.0.1").unwrap(),
+        25565,
+    ))?;
 
     for stream in listener.incoming() {
         handle_connection(stream?);
@@ -27,12 +36,19 @@ fn read_unsigned_short(stream: &mut TcpStream) -> u16 {
     (read_byte(stream) as u16) << 8 | read_byte(stream) as u16
 }
 
+fn read_long(stream: &mut TcpStream) -> i64 {
+    let bytes = read_bytes(stream, 8);
+    i64::from_be_bytes([
+        bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+    ])
+}
+
 fn read_varint(stream: &mut TcpStream) -> i32 {
     let mut buf = [0];
     let mut ans = 0;
     for i in 0..4 {
         stream.read_exact(&mut buf).unwrap();
-        ans |= ((buf[0] & 0b0111_1111) as i32) << 7 * i;
+        ans |= ((buf[0] & 0b0111_1111) as i32) << (7 * i);
         if buf[0] & 0b1000_0000 == 0 {
             break;
         }
@@ -47,10 +63,14 @@ fn read_string(stream: &mut TcpStream) -> String {
 }
 
 fn write_varint(buffer: &mut Vec<u8>, mut value: i32) {
+    if value == 0 {
+        buffer.push(0);
+        return;
+    }
     let mut buf = [0];
     while value != 0 {
         buf[0] = (value & 0b0111_1111) as u8;
-        value = (value >> 7) & (i32::max_value() >> 6);
+        value = (value >> 7) & (i32::MAX >> 6);
         if value != 0 {
             buf[0] |= 0b1000_0000;
         }
@@ -72,9 +92,13 @@ fn write_bytes_to_stream(stream: &mut TcpStream, bytes: Vec<u8>) {
 
 fn write_varint_to_stream(stream: &mut TcpStream, mut value: i32) {
     let mut buf = [0];
+    if value == 0 {
+        stream.write_all(&buf).unwrap();
+        return;
+    }
     while value != 0 {
         buf[0] = (value & 0b0111_1111) as u8;
-        value = (value >> 7) & (i32::max_value() >> 6);
+        value = (value >> 7) & (i32::MAX >> 6);
         if value != 0 {
             buf[0] |= 0b1000_0000;
         }
@@ -82,55 +106,84 @@ fn write_varint_to_stream(stream: &mut TcpStream, mut value: i32) {
     }
 }
 
+fn handle_server_list_ping(stream: &mut TcpStream) -> Result<()> {
+    // Serverbound Handshake
+    let len = read_varint(stream);
+    if len == 254 {
+        stream.shutdown(Shutdown::Both)?;
+        return Err(Error::msg(
+            "Client sent Legacy Ping. Operation not supported",
+        ));
+    }
+
+    let _packet_id = read_varint(stream);
+    let protocol_version = read_varint(stream);
+    let server_address = read_string(stream);
+    let server_port = read_unsigned_short(stream);
+    let next_state = read_varint(stream);
+
+    if next_state != 1 {
+        stream
+            .shutdown(Shutdown::Both)
+            .expect("Error shutting down stream");
+        return Err(Error::msg(
+            "Client tried joining the Server. Operation not supported",
+        ));
+    }
+
+    println!("Handshake received. Protocol Version = {protocol_version}, Server Address = {server_address}:{server_port}");
+
+    //Serverbound Status Request
+    let _len = read_varint(stream);
+    let _packet_id = read_varint(stream);
+
+    println!("Status Request received.");
+
+    // Clientbound Status Response
+    let mut resp_buf: Vec<u8> = Vec::new();
+    write_varint(&mut resp_buf, 0);
+    let payload = String::from(
+        r#"{"version":{"name":"1.20.4","protocol":765},"players":{"max":10000000000000000000,"online":5,"sample":[{"name":"thinkofdeath","id":"4566e69f-c907-48ee-8d71-d7ba5aa00d20"}]},"description":{"text":"Hello world"},"enforcesSecureChat":true,"previewsChat":true}"#,
+    );
+    write_string(&mut resp_buf, payload);
+
+    write_varint_to_stream(stream, resp_buf.len() as i32);
+    write_bytes_to_stream(stream, resp_buf);
+    println!("Status Response Sent");
+
+    // Serverbound Ping Request
+    let mut len = [0];
+    match stream.read(&mut len) {
+        Ok(n) => {
+            if n == 0 {
+                return Ok(());
+            }
+        }
+        Err(e) => {
+            return Err(Report::from(e));
+        }
+    };
+    let _packet_id = read_varint(stream);
+    let payload = read_long(stream);
+
+    println!("Ping Request received. Payload = {payload}");
+
+    //Clientbound Ping Response
+    let mut resp_buf: Vec<u8> = Vec::new();
+    write_varint(&mut resp_buf, 1);
+    resp_buf.append(&mut payload.to_be_bytes().to_vec());
+    write_varint_to_stream(stream, resp_buf.len() as i32);
+    write_bytes_to_stream(stream, resp_buf);
+    println!("Pong Response sent.");
+
+    Ok(())
+}
+
 fn handle_connection(mut stream: TcpStream) {
     println!("Incoming connection from {}", stream.peer_addr().unwrap());
     std::thread::spawn(move || {
-        // Serverbound Handshake
-        let len = read_varint(&mut stream);
-        if len == 254 {
-            println!("Received Legacy Ping. Aborting");
-            stream
-                .shutdown(Shutdown::Both)
-                .expect("Error shutting down stream");
-            return;
+        if let Err(report) = handle_server_list_ping(&mut stream) {
+            println!("{}", report);
         }
-
-        let packet_id = read_varint(&mut stream);
-        let protocol_version = read_varint(&mut stream);
-        let server_address = read_string(&mut stream);
-        let server_port = read_unsigned_short(&mut stream);
-        let next_state = read_varint(&mut stream);
-
-        if next_state != 1 {
-            println!("Player tried joining the server. Aborting");
-            stream
-                .shutdown(Shutdown::Both)
-                .expect("Error shutting down stream");
-            return;
-        }
-
-        dbg!(len);
-        dbg!(packet_id);
-        dbg!(protocol_version);
-        dbg!(server_address);
-        dbg!(server_port);
-        dbg!(next_state);
-
-        //Serverbound Status Request
-        let len = read_varint(&mut stream);
-        let packet_id = read_varint(&mut stream);
-        dbg!(len);
-        dbg!(packet_id);
-
-        // Clientbound Status Response
-        let mut resp_buf: Vec<u8> = Vec::new();
-        resp_buf.push(0);
-        let payload = String::from(
-            r#"{"version":{"name":"1.20.4","protocol":762},"players":{"max":100,"online":5,"sample":[{"name":"thinkofdeath","id":"4566e69f-c907-48ee-8d71-d7ba5aa00d20"}]},"description":{"text":"Hello world"},"enforcesSecureChat":true,"previewsChat":true}"#,
-        );
-        write_string(&mut resp_buf, payload);
-
-        write_varint_to_stream(&mut stream, resp_buf.len() as i32);
-        write_bytes_to_stream(&mut stream, resp_buf);
     });
 }
