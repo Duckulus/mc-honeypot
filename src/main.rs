@@ -3,6 +3,7 @@ use std::sync::Arc;
 use clap::{command, Parser};
 use color_eyre::eyre::Result;
 
+use mc_honeypot::favicon::read_favicon_from_file;
 use mc_honeypot::run_server;
 use mc_honeypot::types::{
     Description, Handler, Players, ServerListPingRequest, ServerListPingResponse, Version,
@@ -36,6 +37,11 @@ fn main() -> Result<()> {
 }
 
 fn get_handler(args: Args) -> Handler {
+    let favicon = args.icon_file.map(|s| match read_favicon_from_file(&s) {
+        Ok(s) => s,
+        Err(e) => panic!("{}", e),
+    });
+
     Arc::new(move |request: ServerListPingRequest| {
         println!("Incoming connection from {}", request.remote_address);
         ServerListPingResponse {
@@ -51,7 +57,7 @@ fn get_handler(args: Args) -> Handler {
             description: Description {
                 text: args.motd.clone(),
             },
-            favicon: None,
+            favicon: favicon.clone(),
             enforces_secure_chat: true,
             previews_chat: true,
         }
