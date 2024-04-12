@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 color-eyre = "0.6"
+serde_json = "1.0.115"
+serde = { version = "1.0.197", features = ["derive"] }
