@@ -21,7 +21,7 @@ impl HoneypotServer {
         color_eyre::install()?;
 
         let listener = TcpListener::bind(SocketAddrV4::new(
-            Ipv4Addr::from_str("127.0.0.1").unwrap(),
+            Ipv4Addr::from_str("0.0.0.0").unwrap(),
             self.port,
         ))?;
 
