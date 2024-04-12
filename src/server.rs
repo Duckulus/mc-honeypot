@@ -25,6 +25,8 @@ impl HoneypotServer {
             self.port,
         ))?;
 
+        println!("Started Server on port {}", self.port);
+
         for stream in listener.incoming() {
             Self::handle_connection(stream?, &self.handler);
         }
@@ -81,7 +83,6 @@ impl HoneypotServer {
 
         let response = handler(request);
         let response_json = serde_json::to_string(&response)?;
-        println!("{}", response_json);
 
         // Clientbound Status Response
         let mut resp_buf: Vec<u8> = Vec::new();

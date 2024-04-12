@@ -1,38 +1,59 @@
 use std::sync::Arc;
 
+use clap::{command, Parser};
 use color_eyre::eyre::Result;
 
 use mc_honeypot::run_server;
 use mc_honeypot::types::{
-    Description, Players, Sample, ServerListPingRequest, ServerListPingResponse, Version,
+    Description, Handler, Players, ServerListPingRequest, ServerListPingResponse, Version,
 };
 
+#[derive(Parser, Debug, Clone)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value = "25565")]
+    port: u16,
+    #[arg(short, long, default_value = "1.20.4")]
+    version_string: String,
+    #[arg(long, default_value = "765")]
+    protocol_version: i32,
+    #[arg(short, long, default_value = "100")]
+    max_players: i32,
+    #[arg(short, long, default_value = "0")]
+    online_players: i32,
+    #[arg(long, default_value = "§aHello, World")]
+    motd: String,
+    #[arg(short, long)]
+    icon_file: Option<String>,
+}
+
 fn main() -> Result<()> {
-    run_server(25565, Arc::new(handler))?;
+    let args = Args::parse();
+
+    run_server(args.port, get_handler(args.clone()))?;
 
     Ok(())
 }
 
-fn handler(request: ServerListPingRequest) -> ServerListPingResponse {
-    println!("Incoming connection from {}", request.remote_address);
-    ServerListPingResponse {
-        version: Version {
-            name: String::from("1.19.4"),
-            protocol: 762,
-        },
-        players: Players {
-            max: 100,
-            online: 1,
-            sample: vec![Sample {
-                name: String::from("Duckulus"),
-                id: String::from("b1efb1f9-cb4f-4a07-a6c6-b681e73f9cd1"),
-            }],
-        },
-        description: Description {
-            text: String::from("Hallo Welt"),
-        },
-        favicon: None,
-        enforces_secure_chat: true,
-        previews_chat: true,
-    }
+fn get_handler(args: Args) -> Handler {
+    Arc::new(move |request: ServerListPingRequest| {
+        println!("Incoming connection from {}", request.remote_address);
+        ServerListPingResponse {
+            version: Version {
+                name: args.version_string.clone(),
+                protocol: args.protocol_version,
+            },
+            players: Players {
+                max: args.max_players,
+                online: args.online_players,
+                sample: vec![],
+            },
+            description: Description {
+                text: args.motd.clone(),
+            },
+            favicon: None,
+            enforces_secure_chat: true,
+            previews_chat: true,
+        }
+    })
 }
