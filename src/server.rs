@@ -160,7 +160,7 @@ impl HoneypotServer {
     fn read_string(stream: &mut TcpStream) -> String {
         let len = Self::read_varint(stream) as usize;
         let data: Vec<u8> = Self::read_bytes(stream, len);
-        String::from_utf8(data).unwrap()
+        String::from_utf8(data).unwrap_or_default()
     }
 
     fn write_varint(buffer: &mut Vec<u8>, mut value: i32) {
