@@ -66,7 +66,7 @@ struct Args {
 
 fn main() -> Result<()> {
     set_up_color_terminal();
-    SimpleLogger::new().with_local_timestamps().init().unwrap();
+    SimpleLogger::new().init().unwrap();
 
     let args = Args::parse();
 
