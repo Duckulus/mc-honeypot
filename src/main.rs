@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use clap::{command, Parser};
 use color_eyre::eyre::Result;
+use log::LevelFilter;
 use simple_logger::{set_up_color_terminal, SimpleLogger};
 
 use mc_honeypot::favicon::read_favicon_from_file;
@@ -66,7 +67,10 @@ struct Args {
 
 fn main() -> Result<()> {
     set_up_color_terminal();
-    SimpleLogger::new().init().unwrap();
+    SimpleLogger::new()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
 
     let args = Args::parse();
 
