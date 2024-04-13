@@ -62,14 +62,14 @@ impl HoneypotServer {
         }
 
         // Serverbound Handshake
-        let _len = read_varint(stream);
-        let _packet_id = read_varint(stream);
-        let protocol_version = read_varint(stream);
-        let server_address = read_utf8_string(stream);
+        let _len = read_varint(stream)?;
+        let _packet_id = read_varint(stream)?;
+        let protocol_version = read_varint(stream)?;
+        let server_address = read_utf8_string(stream)?;
         let server_port = read_unsigned_short(stream).expect("Expected Server Port");
-        let next_state = read_varint(stream);
+        let next_state = read_varint(stream)?;
 
-        if next_state != 1 {
+        if next_state == 2 {
             stream
                 .shutdown(Shutdown::Both)
                 .expect("Error shutting down stream");
@@ -117,8 +117,8 @@ impl HoneypotServer {
                 return Err(Report::from(e));
             }
         };
-        let _packet_id = read_varint(stream);
-        let payload = read_long(stream);
+        let _packet_id = read_varint(stream)?;
+        let payload = read_long(stream)?;
 
         //Clientbound Ping Response
         let mut resp_buf: Vec<u8> = Vec::new();

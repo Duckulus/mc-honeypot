@@ -3,10 +3,10 @@ use std::net::TcpStream;
 
 use color_eyre::Result;
 
-pub fn read_bytes(stream: &mut TcpStream, amount: usize) -> Vec<u8> {
+pub fn read_bytes(stream: &mut TcpStream, amount: usize) -> Result<Vec<u8>> {
     let mut buf = vec![0; amount];
-    stream.read_exact(&mut buf).expect("Error reading bytes");
-    buf
+    stream.read_exact(&mut buf)?;
+    Ok(buf)
 }
 
 pub fn read_byte(stream: &mut TcpStream) -> Result<u8> {
@@ -32,30 +32,30 @@ pub fn read_int(stream: &mut TcpStream) -> Result<u32> {
     ]))
 }
 
-pub fn read_long(stream: &mut TcpStream) -> i64 {
-    let bytes = read_bytes(stream, 8);
-    i64::from_be_bytes([
+pub fn read_long(stream: &mut TcpStream) -> Result<i64> {
+    let bytes = read_bytes(stream, 8)?;
+    Ok(i64::from_be_bytes([
         bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-    ])
+    ]))
 }
 
-pub fn read_varint(stream: &mut TcpStream) -> i32 {
+pub fn read_varint(stream: &mut TcpStream) -> Result<i32> {
     let mut buf = [0];
     let mut ans = 0;
     for i in 0..4 {
-        stream.read_exact(&mut buf).unwrap();
+        stream.read_exact(&mut buf)?;
         ans |= ((buf[0] & 0b0111_1111) as i32) << (7 * i);
         if buf[0] & 0b1000_0000 == 0 {
             break;
         }
     }
-    ans
+    Ok(ans)
 }
 
-pub fn read_utf8_string(stream: &mut TcpStream) -> String {
-    let len = read_varint(stream) as usize;
-    let data: Vec<u8> = read_bytes(stream, len);
-    String::from_utf8(data).unwrap_or_default()
+pub fn read_utf8_string(stream: &mut TcpStream) -> Result<String> {
+    let len = read_varint(stream)? as usize;
+    let data: Vec<u8> = read_bytes(stream, len)?;
+    Ok(String::from_utf8(data).unwrap_or_default())
 }
 
 pub fn read_utf16_string(stream: &mut TcpStream, chars: u16) -> Result<String> {
