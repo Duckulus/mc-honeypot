@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use clap::{command, Parser};
 use color_eyre::eyre::Result;
+use simple_logger::{set_up_color_terminal, SimpleLogger};
 
 use mc_honeypot::favicon::read_favicon_from_file;
 use mc_honeypot::run_server;
@@ -64,6 +65,9 @@ struct Args {
 }
 
 fn main() -> Result<()> {
+    set_up_color_terminal();
+    SimpleLogger::new().with_local_timestamps().init().unwrap();
+
     let args = Args::parse();
 
     run_server(args.port, get_handler(args.clone()))?;
@@ -85,21 +89,23 @@ fn get_handler(args: Args) -> Handler {
         }
         match request.request_type {
             RequestType::JOIN => {
-                println!(
+                log::info!(
                     "[{}] Player tried joining the server",
                     request.remote_address
                 );
             }
             RequestType::LegacyPing(req) => {
-                println!(
+                log::info!(
                     "[{}] Received Legacy Ping Request [{:?}]",
-                    request.remote_address, req
+                    request.remote_address,
+                    req
                 )
             }
             RequestType::ModernPing(req) => {
-                println!(
+                log::info!(
                     "[{}] Received Ping Request [{:?}]",
-                    request.remote_address, req
+                    request.remote_address,
+                    req
                 )
             }
         };

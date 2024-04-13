@@ -63,7 +63,7 @@ fn send_webhook_message(url: String, message: String, color: i32) {
             .send();
 
         if let Err(e) = res {
-            eprintln!("There was an error executing discord webhook {}", e);
+            log::error!("There was an error executing discord webhook {}", e);
         }
     });
 }

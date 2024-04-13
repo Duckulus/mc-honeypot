@@ -12,3 +12,5 @@ serde = { version = "1.0.197", features = ["derive"] }
 clap = { version = "4.5.4", features = ["derive"] }
 base64 = "0.22.0"
 reqwest = { version = "0.12.3", features = ["json", "blocking"] }
+simple_logger = { version = "4.3.3", features = ["timestamps", "colors"] }
+log = "0.4.21"

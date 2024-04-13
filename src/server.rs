@@ -33,7 +33,7 @@ impl HoneypotServer {
             self.port,
         ))?;
 
-        println!("Started Server on port {}", self.port);
+        log::info!("Started Server on port {}", self.port);
 
         for stream in listener.incoming() {
             Self::handle_connection(stream?, &self.handler);
@@ -46,7 +46,7 @@ impl HoneypotServer {
         let cloned = handler.clone();
         std::thread::spawn(move || {
             if let Err(report) = Self::handle_server_list_ping(&mut stream, cloned) {
-                eprintln!("{}", report)
+                log::error!("{}", report)
             }
         });
     }
