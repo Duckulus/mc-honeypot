@@ -3,11 +3,21 @@ use std::sync::Arc;
 
 use serde::Serialize;
 
-pub type Handler =
-    Arc<dyn Fn(ServerListPingRequest) -> ServerListPingResponse + Send + Sync + 'static>;
+pub type Handler = Arc<dyn Fn(Request) -> ServerListPingResponse + Send + Sync + 'static>;
 
-pub struct ServerListPingRequest {
+pub struct Request {
+    pub request_type: RequestType,
     pub remote_address: SocketAddr,
+}
+
+pub enum RequestType {
+    JOIN,
+    ModernPing(ServerListPingRequest),
+    LegacyPing(ServerListPingRequest),
+}
+
+#[derive(Debug, )]
+pub struct ServerListPingRequest {
     pub protocol_version: i32,
     pub server_address: String,
     pub server_port: u16,

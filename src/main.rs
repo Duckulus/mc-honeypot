@@ -6,7 +6,7 @@ use color_eyre::eyre::Result;
 use mc_honeypot::favicon::read_favicon_from_file;
 use mc_honeypot::run_server;
 use mc_honeypot::types::{
-    Description, Handler, Players, ServerListPingRequest, ServerListPingResponse, Version,
+    Description, Handler, Players, Request, RequestType, ServerListPingResponse, Version,
 };
 
 #[derive(Parser, Debug, Clone)]
@@ -74,8 +74,27 @@ fn get_handler(args: Args) -> Handler {
         Err(e) => panic!("{}", e),
     });
 
-    Arc::new(move |request: ServerListPingRequest| {
-        println!("Incoming connection from {}", request.remote_address);
+    Arc::new(move |request: Request| {
+        match request.request_type {
+            RequestType::JOIN => {
+                println!(
+                    "[{}] Player tried joining the server",
+                    request.remote_address
+                );
+            }
+            RequestType::LegacyPing(req) => {
+                println!(
+                    "[{}] Received Legacy Ping Request [{:?}]",
+                    request.remote_address, req
+                )
+            }
+            RequestType::ModernPing(req) => {
+                println!(
+                    "[{}] Received Ping Request [{:?}]",
+                    request.remote_address, req
+                )
+            }
+        };
         ServerListPingResponse {
             version: Version {
                 name: args.version_string.clone(),
