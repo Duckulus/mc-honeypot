@@ -3,7 +3,7 @@ use std::net::{Ipv4Addr, Shutdown, SocketAddrV4, TcpListener, TcpStream};
 use std::str::FromStr;
 use std::time::Duration;
 
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::Result;
 use color_eyre::Report;
 
 use crate::server::legacy::handle_legacy_ping;
@@ -73,9 +73,12 @@ impl HoneypotServer {
             stream
                 .shutdown(Shutdown::Both)
                 .expect("Error shutting down stream");
-            return Err(eyre!(
-                "Client tried joining the Server. Operation not supported",
-            ));
+
+            handler(Request {
+                request_type: RequestType::JOIN,
+                remote_address: stream.peer_addr().unwrap(),
+            });
+            return Ok(());
         }
 
         //Serverbound Status Request

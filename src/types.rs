@@ -16,7 +16,7 @@ pub enum RequestType {
     LegacyPing(ServerListPingRequest),
 }
 
-#[derive(Debug, )]
+#[derive(Debug)]
 pub struct ServerListPingRequest {
     pub protocol_version: i32,
     pub server_address: String,

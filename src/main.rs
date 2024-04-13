@@ -8,6 +8,7 @@ use mc_honeypot::run_server;
 use mc_honeypot::types::{
     Description, Handler, Players, Request, RequestType, ServerListPingResponse, Version,
 };
+use mc_honeypot::webhook::log_ping_to_webhook;
 
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
@@ -58,6 +59,8 @@ struct Args {
         help = "Path to png image which is displayed as the server icon. Needs to be 64x64 pixels in size"
     )]
     icon_file: Option<String>,
+    #[arg(short, long, help = "URL of discord webhook to send logs to")]
+    webhook_url: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -74,7 +77,12 @@ fn get_handler(args: Args) -> Handler {
         Err(e) => panic!("{}", e),
     });
 
+    let cloned_webhook_url = args.webhook_url.clone();
+
     Arc::new(move |request: Request| {
+        if let Some(url) = &cloned_webhook_url {
+            log_ping_to_webhook(url, &request.remote_address, &request.request_type);
+        }
         match request.request_type {
             RequestType::JOIN => {
                 println!(
