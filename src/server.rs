@@ -1,3 +1,4 @@
+use std::intrinsics::write_bytes;
 use std::io::Read;
 use std::net::{Ipv4Addr, Shutdown, SocketAddrV4, TcpListener, TcpStream};
 use std::str::FromStr;
@@ -81,10 +82,6 @@ impl HoneypotServer {
             return Ok(());
         }
 
-        //Serverbound Status Request
-        let _len = read_varint(stream);
-        let _packet_id = read_varint(stream);
-
         let request = Request {
             remote_address: stream.peer_addr().unwrap(),
             request_type: RequestType::ModernPing(ServerListPingRequest {
@@ -97,28 +94,20 @@ impl HoneypotServer {
         let response = handler(request);
         let response_json = serde_json::to_string(&response)?;
 
+        // Serverbound Status Request OR Serverbound Ping Request
+        let _len = read_varint(stream);
+        let _packet_id = read_varint(stream);
+        let payload = read_long(stream).unwrap_or(0);
+
         // Clientbound Status Response
         let mut resp_buf: Vec<u8> = Vec::new();
         write_varint(&mut resp_buf, 0);
         write_utf8_string(&mut resp_buf, response_json);
 
-        write_varint_to_stream(stream, resp_buf.len() as i32);
-        write_bytes_to_stream(stream, resp_buf);
-
-        // Serverbound Ping Request
-        let mut len = [0];
-        match stream.read(&mut len) {
-            Ok(n) => {
-                if n == 0 {
-                    return Ok(());
-                }
-            }
-            Err(e) => {
-                return Err(Report::from(e));
-            }
-        };
-        let _packet_id = read_varint(stream)?;
-        let payload = read_long(stream)?;
+        let mut status_buffer: Vec<u8> = Vec::new();
+        write_varint(&mut status_buffer, resp_buf.len() as i32);
+        status_buffer.append(&mut resp_buf);
+        write_bytes_to_stream(stream, status_buffer);
 
         //Clientbound Ping Response
         let mut resp_buf: Vec<u8> = Vec::new();
