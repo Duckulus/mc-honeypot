@@ -42,7 +42,7 @@ pub fn read_long(stream: &mut TcpStream) -> Result<i64> {
 pub fn read_varint(stream: &mut TcpStream) -> Result<i32> {
     let mut buf = [0];
     let mut ans = 0;
-    for i in 0..4 {
+    for i in 0..5 {
         stream.read_exact(&mut buf)?;
         ans |= ((buf[0] & 0b0111_1111) as i32) << (7 * i);
         if buf[0] & 0b1000_0000 == 0 {
