@@ -35,7 +35,7 @@ in
             )) + (
               # Webhook URL
               if   (cfg.settings.webhook-url-file != null)
-              then ("--webhook-url " + (builtins.readFile cfg.settings.webhook-url-file))
+              then (" --webhook-url " + (builtins.readFile cfg.settings.webhook-url-file))
               else ""
             );
 
