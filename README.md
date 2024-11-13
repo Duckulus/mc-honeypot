@@ -39,3 +39,42 @@ mc-honeypot [OPTIONS]
   -V, --version
           Print version
 ```
+
+## Nix
+
+If you are using the Nix package manager, you can run it using flakes with:
+`nix run "github:Duckulus/mc-honeypot" -- [OPTIONS]`
+
+If you are running a NixOS server and using flakes,
+you can import it to run as a systemd service like this:
+```nix
+{
+  description = "NixOS configuration";
+
+  inputs = {
+    mc-honeypot.url = "github:Duckulus/mc-honeypot";
+  };
+
+  outputs = { self, nixpkgs, simple-nixos-mailserver }: {
+    nixosConfigurations = {
+      hostname = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          mc-honeypot.nixosModules.default
+          {
+            services.mc-honeypot = {
+              enable = true;
+
+              openFirewall = true;
+
+              settings = {
+                # Interpreted as command line options
+              };
+            };
+          }
+        ];
+      };
+    };
+  };
+}
+```
