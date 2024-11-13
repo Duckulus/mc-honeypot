@@ -4,12 +4,13 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     crane.url = "github:ipetkov/crane";
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, crane, flake-utils, ... }:
-  flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, crane, ... }:
   let
+    system = "x86_64-linux";
+
+
     pkgs = nixpkgs.legacyPackages.${system};
 
     craneLib = crane.mkLib pkgs;
@@ -23,27 +24,30 @@
       ];
     };
 
-    my-crate = craneLib.buildPackage (commonArgs // {
+    mc-honeypot = craneLib.buildPackage (commonArgs // {
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
       #OPENSSL_DIR = "${pkgs.openssl}/etc/ssl";
       #PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
     });
-  in
-  {
-    checks = {
-      inherit my-crate;
+  in {
+    checks.${system} = {
+      inherit mc-honeypot;
     };
 
-    packages.default = my-crate;
-
-    apps.default = flake-utils.lib.mkApp {
-      drv = my-crate;
+    packages.${system} = {
+      mc-honeypot = mc-honeypot;
+      default =    mc-honeypot;
     };
 
-    devShells.default = craneLib.devShell {
+    nixosModules.default = import ./. {
+      inherit (nixpkgs) lib;
+      selfpkgs = self.packages.${system};
+    };
+
+    devShells.${system}.default = craneLib.devShell {
       # Inherit inputs from checks.
       checks = self.checks.${system};
     };
-  });
+  };
 }
