@@ -17,7 +17,7 @@
       default = {};
       description = "Arguments provided to the program. See <https://github.com/Duckulus/mc-honeypot#options>";
       type = lib.types.submodule {
-        freeformType = lib.types.attrsOf lib.types.str;
+        freeformType = lib.types.attrsOf (lib.types.oneOf [ lib.types.str lib.types.int ]);
 
         options = {
           port = lib.mkOption {
