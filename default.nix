@@ -44,7 +44,11 @@
           webhook-url-file = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
-            description = "Path to the file containing the webhook url";
+            description = ''
+              Path to the file containing the webhook url.
+              WARNING: This will be in your store and the contents
+              will be viewable in the systemd service.
+            '';
           };
         };
       };
