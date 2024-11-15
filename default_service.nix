@@ -39,7 +39,7 @@ in
             )) + (
               # Webhook URL
               if   (cfg.settings.webhook-url-file != null)
-              then " --webhook-url \\\\\\$(cat ${cfg.settings.webhook-url-file})"
+              then " --webhook-url \\\\\\$(cat ${cfg.settings.webhook-url-file} | ${pkgs.findutils}/bin/xargs)"
               else ""
             ) + "\"";
 
