@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 with lib;
 let
   cfg = config.services.mc-honeypot;
@@ -15,10 +15,14 @@ in
         after = [ "network.target" ];
 
         serviceConfig = {
-          DynamicUser = true;
-          User = "mc-honeypot";
+          # TODO: If this is used, then the service will no longer
+          #       be able to access the webhook-url-file tometimes.
+          #       So find a way to get around it.
+          #DynamicUser = true;
+          #User = "mc-honeypot";
 
-          ExecStart = "${cfg.package}/bin/mc-honeypot --" + (
+          # NOTE: Using bash to evaluate the webhook-url-file
+          ExecStart = "${pkgs.bash}/bin/bash -c \"${cfg.package}/bin/mc-honeypot --" + (
             lib.concatStringsSep " --" (
               # Main program args
               lib.mapAttrsToList 
@@ -35,9 +39,9 @@ in
             )) + (
               # Webhook URL
               if   (cfg.settings.webhook-url-file != null)
-              then (" --webhook-url " + (builtins.readFile cfg.settings.webhook-url-file))
+              then " --webhook-url \\\\\\$(cat ${cfg.settings.webhook-url-file})"
               else ""
-            );
+            ) + "\"";
 
           Restart = "on-failure";
           RestartSec = 10;

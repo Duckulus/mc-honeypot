@@ -23,13 +23,13 @@
           port = lib.mkOption {
             type = lib.types.port;
             default = 25565;
-            description = "The port mc-honeypot will be listening on";
+            description = "The port mc-honeypot will be listening on.";
           };
 
           icon-file = lib.mkOption {
             type = with lib.types; nullOr (oneOf [ str path ] );
             default = null;
-            description = "Path to png image which is displayed as the server icon. Needs to be 64x64 pixels in size";
+            description = "Path to png image which is displayed as the server icon. Needs to be 64x64 pixels in size.";
           };
 
           webhook-url = lib.mkOption {
@@ -44,11 +44,7 @@
           webhook-url-file = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
-            description = ''
-              Path to the file containing the webhook url.
-              WARNING: This will be in your store and the contents
-              will be viewable in the systemd service.
-            '';
+            description = "Path to the file containing the webhook url.";
           };
         };
       };
