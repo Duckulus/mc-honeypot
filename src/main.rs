@@ -8,7 +8,7 @@ use simple_logger::{set_up_color_terminal, SimpleLogger};
 use mc_honeypot::favicon::read_favicon_from_file;
 use mc_honeypot::run_server;
 use mc_honeypot::types::{
-    Description, Handler, Players, Request, RequestType, ServerListPingResponse, Version,
+    Description, Handler, Players, Request, RequestType, Sample, ServerListPingResponse, Version
 };
 use mc_honeypot::webhook::BufferedWebhookClient;
 
@@ -45,10 +45,15 @@ struct Args {
     #[arg(
         short,
         long,
-        help = "The displayed online player count",
-        default_value = "0"
+        help = "The displayed online player count. Defaults to player count if not provided",
     )]
-    online_players: i32,
+    online_players: Option<i32>,
+    #[arg(
+        long,
+        help = "The Username and UUID (seperated by \":\") of fake players you want to add to the server (providable multiple times)",
+        value_name = "NAME:UUID",
+    )]
+    players: Option<Vec<String>>,
     #[arg(
         long,
         help = "The displayed \"Message of the Day\"",
@@ -84,6 +89,25 @@ fn get_handler(args: Args) -> Handler {
         Ok(s) => s,
         Err(e) => panic!("{}", e),
     });
+    let sample = match &args.players {
+        Some(s) => {
+            let mut players: Vec<Sample> = Vec::new();
+            for p in s.iter() {
+                match p.split_once(':') {
+                    Some(sp) => players.push(Sample {
+                        name: sp.0.to_string(),
+                        id: sp.1.to_string(),
+                    }),
+                    None => log::warn!(
+                        "Unable to split \"{}\", check you are using a \":\" to split the name & UUID",
+                        p
+                    )
+                }
+            }
+            players
+        },
+        None => vec![],
+    };
 
     let client = args.webhook_url.map(BufferedWebhookClient::new);
     Arc::new(move |request: Request| {
@@ -118,9 +142,15 @@ fn get_handler(args: Args) -> Handler {
                 protocol: args.protocol_version,
             },
             players: Players {
+                sample: sample.clone(),
                 max: args.max_players,
-                online: args.online_players,
-                sample: vec![],
+                online: match args.online_players {
+                    Some(v) => v,
+                    None => { match &args.players {
+                        Some(s) => s.len() as i32,
+                        None => 0,
+                    }},
+                },
             },
             description: Description {
                 text: args.motd.clone(),
