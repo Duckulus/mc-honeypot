@@ -91,10 +91,11 @@ fn get_handler(args: Args) -> Handler {
             client.send(&request.remote_address, &request.request_type);
         }
         match request.request_type {
-            RequestType::JOIN => {
+            RequestType::Join(req) => {
                 log::info!(
-                    "[{}] Player tried joining the server",
-                    request.remote_address
+                    "[{}] {} ({}) tried joining the server",
+                    request.remote_address,
+                    req.name, req.id
                 );
             }
             RequestType::LegacyPing(req) => {

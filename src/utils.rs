@@ -32,6 +32,10 @@ pub fn read_int(stream: &mut TcpStream) -> Result<u32> {
     ]))
 }
 
+pub fn read_int128(stream: &mut TcpStream) -> Result<u128> {
+    Ok(u128::from_be_bytes(read_bytes(stream, 16)?.try_into().unwrap()))
+}
+
 pub fn read_long(stream: &mut TcpStream) -> Result<i64> {
     let bytes = read_bytes(stream, 8)?;
     Ok(i64::from_be_bytes([
@@ -98,4 +102,15 @@ pub fn write_varint_to_stream(stream: &mut TcpStream, value: i32) {
     let mut buf = Vec::new();
     write_varint(&mut buf, value);
     write_bytes_to_stream(stream, buf);
+}
+
+pub fn format_uuid(value: u128) -> String {
+    let mut uuid = format!("{:x}", value);
+    // Format it to be XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    uuid.insert(20, '-');
+    uuid.insert(16, '-');
+    uuid.insert(12, '-');
+    uuid.insert(8, '-');
+
+    uuid
 }

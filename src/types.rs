@@ -11,7 +11,7 @@ pub struct Request {
 }
 
 pub enum RequestType {
-    JOIN,
+    Join(Sample),
     ModernPing(ServerListPingRequest),
     LegacyPing(ServerListPingRequest),
 }
