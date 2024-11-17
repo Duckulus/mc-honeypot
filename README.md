@@ -57,7 +57,7 @@ you can import it to run as a systemd service like this:
     mc-honeypot.url = "github:Duckulus/mc-honeypot";
   };
 
-  outputs = { self, nixpkgs, simple-nixos-mailserver }: {
+  outputs = { self, nixpkgs, mc-honeypot }: {
     nixosConfigurations = {
       hostname = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
