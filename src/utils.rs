@@ -105,7 +105,7 @@ pub fn write_varint_to_stream(stream: &mut TcpStream, value: i32) {
 }
 
 pub fn format_uuid(value: u128) -> String {
-    let mut uuid = format!("{:x}", value);
+    let mut uuid = format!("{:0>32}", format!("{:x}", value));
     // Format it to be XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
     uuid.insert(20, '-');
     uuid.insert(16, '-');
