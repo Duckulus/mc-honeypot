@@ -8,10 +8,9 @@ use color_eyre::eyre::Result;
 use color_eyre::Report;
 
 use crate::server::legacy::handle_legacy_ping;
-use crate::types::{Handler, Request, RequestType, ServerListPingRequest};
+use crate::types::{Handler, Request, RequestType, SamplePlayer, ServerListPingRequest};
 use crate::utils::{
-    read_long, read_unsigned_short, read_utf8_string, read_varint, write_bytes_to_stream,
-    write_utf8_string, write_varint, write_varint_to_stream,
+    format_uuid, read_int128, read_long, read_unsigned_short, read_utf8_string, read_varint, write_bytes_to_stream, write_utf8_string, write_varint, write_varint_to_stream
 };
 
 pub mod legacy;
@@ -71,12 +70,20 @@ impl HoneypotServer {
         let next_state = read_varint(stream)?;
 
         if next_state == 2 {
+            let _len = read_varint(stream)?;
+            let _packet_id = read_varint(stream)?;
+            let username = read_utf8_string(stream)?;
+            let uuid = read_int128(stream)?;
+
             stream
                 .shutdown(Shutdown::Both)
                 .expect("Error shutting down stream");
 
             handler(Request {
-                request_type: RequestType::JOIN,
+                request_type: RequestType::Join(SamplePlayer {
+                    name: username,
+                    id: format_uuid(uuid),
+                }),
                 remote_address: stream.peer_addr().unwrap(),
             });
             return Ok(());

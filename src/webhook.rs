@@ -123,7 +123,10 @@ impl Drop for BufferedWebhookClient {
 
 fn build_embed(address: &SocketAddr, request_type: &RequestType) -> Embed {
     let information = match request_type {
-        RequestType::JOIN => String::from("Player tried joining the Server"),
+        RequestType::Join(ref req) => format!(
+            "[`{}` (`{}`)](https://namemc.com/profile/{}) tried joining the Server",
+            req.name, req.id, req.id
+        ),
         RequestType::LegacyPing(ref req) => format!("Player sent legacy Ping: {:?}", req),
         RequestType::ModernPing(ref req) => format!("Player sent regular Ping: {:?}", req),
     };
@@ -140,7 +143,7 @@ fn build_embed(address: &SocketAddr, request_type: &RequestType) -> Embed {
 
 fn get_color_from_request_type(request_type: &RequestType) -> i32 {
     match request_type {
-        RequestType::JOIN => RgbColor::new(250, 20, 20).rgb(),
+        RequestType::Join(_) => RgbColor::new(250, 20, 20).rgb(),
         RequestType::LegacyPing(_) => RgbColor::new(220, 150, 20).rgb(),
         RequestType::ModernPing(_) => RgbColor::new(20, 250, 20).rgb(),
     }
