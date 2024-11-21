@@ -27,7 +27,9 @@ mc-honeypot [OPTIONS]
   -m, --max-players <MAX_PLAYERS>
           The displayed maximum player count [default: 100]
   -o, --online-players <ONLINE_PLAYERS>
-          The displayed online player count [default: 0]
+          The displayed online player count. Defaults to player count if not provided
+      --players <NAME:UUID>
+          The Username and UUID (seperated by ":") of fake players you want to add to the server (providable multiple times)
       --motd <MOTD>
           The displayed "Message of the Day" [default: "§aHello, World"]
   -i, --icon-file <ICON_FILE>
@@ -55,7 +57,7 @@ you can import it to run as a systemd service like this:
     mc-honeypot.url = "github:Duckulus/mc-honeypot";
   };
 
-  outputs = { self, nixpkgs, simple-nixos-mailserver }: {
+  outputs = { self, nixpkgs, mc-honeypot }: {
     nixosConfigurations = {
       hostname = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
