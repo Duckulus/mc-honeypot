@@ -8,7 +8,7 @@ use simple_logger::{set_up_color_terminal, SimpleLogger};
 use mc_honeypot::favicon::read_favicon_from_file;
 use mc_honeypot::run_server;
 use mc_honeypot::types::{
-    Description, Handler, Players, Request, RequestType, Sample, ServerListPingResponse, Version
+    Description, Handler, Players, Request, RequestType, SamplePlayer, ServerListPingResponse, Version
 };
 use mc_honeypot::webhook::BufferedWebhookClient;
 
@@ -91,10 +91,10 @@ fn get_handler(args: Args) -> Handler {
     });
     let sample = match &args.players {
         Some(s) => {
-            let mut players: Vec<Sample> = Vec::new();
+            let mut players: Vec<SamplePlayer> = Vec::new();
             for p in s.iter() {
                 match p.split_once(':') {
-                    Some(sp) => players.push(Sample {
+                    Some(sp) => players.push(SamplePlayer {
                         name: sp.0.to_string(),
                         id: sp.1.to_string(),
                     }),

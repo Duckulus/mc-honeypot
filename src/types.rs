@@ -11,7 +11,7 @@ pub struct Request {
 }
 
 pub enum RequestType {
-    Join(Sample),
+    Join(SamplePlayer),
     ModernPing(ServerListPingRequest),
     LegacyPing(ServerListPingRequest),
 }
@@ -46,11 +46,11 @@ pub struct Version {
 pub struct Players {
     pub max: i32,
     pub online: i32,
-    pub sample: Vec<Sample>,
+    pub sample: Vec<SamplePlayer>,
 }
 
 #[derive(Serialize, Clone)]
-pub struct Sample {
+pub struct SamplePlayer {
     pub name: String,
     pub id: String,
 }
