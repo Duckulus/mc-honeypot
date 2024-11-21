@@ -49,7 +49,7 @@ pub struct Players {
     pub sample: Vec<Sample>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Sample {
     pub name: String,
     pub id: String,
