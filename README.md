@@ -1,6 +1,6 @@
 # `mc-honeypot`
 
-This is a server-side implementation of minecraft's [Server List Ping Protocol](https://wiki.vg/Server_List_Ping). It
+This is a server-side implementation of minecraft's [Server List Ping Protocol](https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Server_List_Ping). It
 logs all incoming connections. The server's appearance in the client server list is fully customizable. This
 implementation supports both the current protocol (1.7+) and the legacy protocol (1.6 and below).
 
